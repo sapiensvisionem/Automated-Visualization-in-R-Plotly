@@ -1,0 +1,342 @@
+---
+title: "Plotly"
+author: "Ji Hun Lee"
+date: "April 30, 2020"
+output: html_document
+---
+
+Converting a ggplot2 scatterplot
+create an interactive version of the below scatterplot, exploring the relationship between video game sales in North America (NA_sales) and aggregate critic score (Critic_Score) in 2016.
+```{r}
+# Load the plotly package
+library(plotly)
+
+# Store the scatterplot of Critic_Score vs. NA_Sales sales in 2016
+scatter <- vgsales %>%
+			filter(Year == 2016) %>%
+			ggplot(aes(x = NA_Sales, y = Critic_Score)) +
+			geom_point(alpha = 0.3)
+
+# Convert the scatterplot to a plotly graphic
+ggplotly(scatter)
+```
+
+Histograms
+create a histogram from scratch in order to explore the distribution of the critic scores of video games sold between 1980 and 2016
+```{r}
+# Create a histogram of Critic_Score
+vgsales %>%
+	plot_ly(x = ~Critic_Score) %>%
+	add_histogram()				  
+```
+
+Bar charts
+create a bar chart from scratch in order to explore the distribution of the video game genres represented in games sold between 1980 and 2016.
+```{r}
+# Create a frequency for Genre
+genre_table <- vgsales %>%
+	count(Genre)
+
+# Reorder the bars for Genre by n
+genre_table %>%
+	mutate(Genre = fct_reorder(Genre, n,.desc = TRUE)) %>%
+	plot_ly(x = ~Genre, y = ~n) %>% 
+	add_bars()                      
+```
+
+
+Scatterplot
+create a scatterplot in plotly to explore the relationship between the average player score (User_Score) and the average critic score (Critic_Score)
+```{r}
+# Create a scatter plot of User_Score against Critic_Score
+vgsales %>% 
+  plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+  add_markers()
+```
+
+Stacked bar chart
+create a stacked bar chart to investigate whether there is an association between the Genre and Rating of video games.
+```{r}
+# Filter out the 2016 video games
+vg2016 <- vgsales %>%
+	filter(Year == 2016)
+
+# Create a stacked bar chart of Rating by Genre
+vg2016 %>%
+	count(Genre, Rating) %>%
+	plot_ly(x = ~Genre, y = ~n, color = ~Rating) %>%
+  	add_bars() %>%
+  	layout(barmode = 'stack')
+```
+
+Boxplot
+create a boxplot of global video game sales (the number of units sold) for each genre.
+```{r}
+# Filter out the 2016 video games
+vg2016 <- vgsales %>%
+	filter(Year == 2016)
+
+# Create boxplots of Global_Sales by Genre for above data
+vg2016 %>% 
+  plot_ly(x=~Global_Sales, y=~Genre) %>%
+  add_boxplot()
+```
+
+Customization
+Color and Opacity
+Increasing the transparency (i.e. decreasing the opacity) of a trace can help improve its readability.
+```{r}
+# Create a histogram of Critic_Score with navy bars that are 50% transparent
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score) %>%
+  add_histogram(color = I('navy'), opacity = 0.5)
+```
+
+Alternative color formats
+```{r}
+# Change the color of the histogram using a hex code
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score) %>%
+  add_histogram(color=I('#111e6c'))
+
+# Change the color of the histogram using rgb()
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score) %>%
+  add_histogram(marker = list(color = "rgb(17, 30, 108)"))
+```
+
+Size and symbol
+changing the plotting symbol can make charts easier to read by addressing issues such as overplotting
+Decreasing the size of points can also help overcome minor overplotting issues
+```{r}
+# Set the plotting symbol to diamond and the size to 4
+plot_ly(data = vg2016, x = ~User_Score, y = ~Critic_Score) %>% 
+	add_markers(marker = list(symbol = 'diamond', size = 4)) 
+```
+
+Adding a third variable
+```{r}
+# Use color to add Genre as a third variable
+vgsales2016 %>%
+  plot_ly(x=~Critic_Score, y=~User_Score, color=~Genre) %>%
+  add_markers(colors='Dark2')
+```
+
+Beyond colors: Symbols
+Using both color and shape to encode a categorical variable can be a useful strategy to reveal relationships more effectively. This double-encoding strategy uses two pre-attentive visual cues to more-quickly communicate information to the reader. This idea is implemented by default in plotly; if you map a variable to the symbol, plotly automatically maps the variable to the color.
+```{r}
+# Create a scatterplot of User_Score against Critic_Score coded by Rating
+vgsales2016 %>%
+   plot_ly(x=~Critic_Score, y=~User_Score, color=~Rating, symbol=~Rating) %>%
+   add_markers()
+```
+
+Transforming a color scale
+When mapping a numeric variable to color, sometimes it is necessary to transform the variable. This is especially true if the variable values differ by an order of magnitude or more. Explore how the number of users helps explain the relationship between user and critic scores for video games in 2016. Explore how applying the natural log can help make a color scale more interpretable
+```{r}
+# Create a scatterplot of User_Score vs. Critic_Score colored by User_Count
+vgsales2016 %>%
+  plot_ly(x = ~Critic_Score, y = ~User_Score, color=~User_Count) %>%
+  add_markers()
+```
+
+Removing a piece of hover info
+remove the platform labels from the hover info for the bar chart displaying the number of games released for each platform in 2016.
+```{r}
+# Create a bar chart of Platform with hoverinfo only for the bar heights
+vgsales2016 %>%
+	count(Platform) %>%
+	plot_ly(x=~Platform, y=~n, hoverinfo='y') %>%
+ 	add_bars()
+```
+
+Adding to hoverinfo
+add an identifying column rather than polish your chart for publication on the web. This is possible by adding the text argument to the plot_ly() command without specifying hoverinfo = "text".
+```{r}
+# Create a scatterplot of User_Score vs. Critic score
+vgsales2016 %>%
+	# Add video game Name to the hover info text
+	plot_ly(x = ~Critic_Score, y = ~User_Score, text = ~Name) %>% 
+	add_markers()
+```
+
+Custom Hoverinfo
+Customize the hover info to help explore the relationship between North American video game sales and European video game sales in 2016. identify the video games with the greatest discrepancy between the North American and European sales.
+```{r}
+# Format the hover info for NA_Sales, EU_Sales, and Name
+vgsales2016 %>%
+  plot_ly(x = ~NA_Sales, y = ~EU_Sales,
+          hoverinfo = 'text',
+          text = ~paste('NA_Sales: ', NA_Sales, '<br>',
+                     'EU_Sales: ', EU_Sales, '<br>',
+                     'Name: ', Name)
+  ) %>%
+  add_markers()
+```
+
+Polishing a scatterplot
+display global sales on the log scale
+```{r}
+# Polish the scatterplot by transforming the x-axis and labeling both axes
+vgsales2016 %>%
+  plot_ly(x = ~Global_Sales, y = ~Critic_Score) %>%
+  add_markers(marker = list(opacity = 0.5)) %>%
+  layout(xaxis = list(title="Global sales (millions of units)", type='log'),
+         yaxis = list(title="Critic score"))
+```
+
+Matching a theme
+Only horizontal grid lines
+A light gray background (#ebebeb) around your plot
+```{r}
+# Set the background color to #ebebeb and remove the vertical grid
+annual_vgsales %>%
+  plot_ly(x = ~Year, y = ~Global_Sales) %>%
+  add_lines() %>%
+  layout(xaxis=list(showgrid=FALSE),paper_bgcolor="#ebebeb")
+```
+
+Adding a linear smoother
+add a linear smoother to a scatterplot of user score against critic score for video games in 2016
+```{r}
+# Fit the regression model of User_Score on Critic_Score
+m <- lm(User_Score ~ Critic_Score, data = vgsales2016)
+
+# Create the scatterplot with smoother
+vgsales2016 %>%
+   select(User_Score, Critic_Score) %>%
+   na.omit() %>%
+   plot_ly(x = ~Critic_Score, y = ~User_Score) %>%
+   add_markers(showlegend = FALSE) %>%
+   add_lines(y = ~fitted(m))
+```
+
+Overlayed density plots
+ create density plots and overlay them to compare the distribution of critic scores for three video game publishers: Activision, Electronic Arts, and Nintendo.
+ The fill = 'tozeroy' argument fills the area under the curve.
+```{r}
+# Compute density curves
+d.a <- density(activision$Critic_Score, na.rm = TRUE)
+d.e <- density(ea$Critic_Score, na.rm = TRUE)
+d.n <- density(nintendo$Critic_Score, na.rm = TRUE)
+
+# Overlay density plots
+plot_ly() %>%
+  add_lines(x = ~d.a$x, y = ~d.a$y, name = "Activision", fill = 'tozeroy') %>%
+  add_lines(x = ~d.e$x, y = ~d.e$y, name = "Electronic Arts", fill = 'tozeroy') %>%
+  add_lines(x = ~d.n$x, y = ~d.n$y, name = "Nintendo", fill = 'tozeroy') %>%
+  layout(xaxis = list(title = 'Critic Score'),
+         yaxis = list(title = 'Density'))
+```
+
+Manual faceting
+subplot() command allows you to combine charts to create facets (i.e. subplots or small multiples). This is a great way to explore distributions and relationships across factors.
+
+```{r}
+# Create a scatterplot of User_Score against Critic_Score for PS4 games
+p1 <- vgsales2016 %>%
+   filter(Platform == "PS4") %>%
+   plot_ly(x = ~Critic_Score, y = ~User_Score) %>% 
+   add_markers(name = "PS4")
+
+# Create a scatterplot of User_Score against Critic_Score for XOne games
+p2 <- vgsales2016 %>%
+   filter(Platform == "XOne") %>%
+   plot_ly(x = ~Critic_Score, y = ~User_Score) %>% 
+   add_markers(name = "XOne")
+
+# Create a facted scatterplot containing p1 and p2
+subplot(p1, p2, nrows=2)
+```
+
+Automated faceting
+automate the process of creating a facetted scatterplot with 12 facets
+```{r}
+# Create a faceted scatterplot of User_Score vs. Critic_Score with 3 rows
+vgsales2016 %>%
+  group_by(Platform) %>%
+  do(
+    plot = plot_ly(data = ., x=~Critic_Score, y=~User_Score) %>%
+      add_markers(name = ~Platform)
+  ) %>%
+  subplot(nrows = 3, shareY = TRUE, shareX = TRUE)
+```
+
+Plot and axis titles
+add titles to subplots
+```{r}
+# Add x-axis and y-axis labels, and a title
+subplot(p1, p2, nrows = 2, shareX=TRUE, shareY=TRUE, titleX=TRUE, titleY=TRUE) %>%
+   layout(title="User score vs. critic score by platform, 2016")
+```
+
+Polishing axis titles
+The axes in a subplot can be renamed using the layout() command, just like in a single plot; however, there are multiple x-axes to rename. 
+```{r}
+# Add x-axis and y-axis labels, and a title to  sp2
+sp2 %>%
+   layout(
+     xaxis = list(title=""), 
+     xaxis2 = list(title='Year'),
+     yaxis = list(title="Global Sales (M units)"), 
+     yaxis2 = list(title="Global Sales (M units)")
+   )
+```
+
+Scatterplot Matrices
+```{r}
+# Create a SPLOM of NA_Sales, EU_Sales, and JP_Sales
+vgsales2016 %>%
+  plot_ly() %>%
+  add_trace(
+    type = 'splom',
+    dimensions = list(
+      list(label = 'N. America', values = ~NA_Sales),
+      list(label = 'Europe', values = ~EU_Sales),
+      list(label = 'Japan', values = ~JP_Sales)
+    )
+  )
+```
+
+Customizing Color
+add color to represent an additional variable in a scatterplot matrix.
+```{r}
+# Color the SPLOM of NA_Sales, EU_Sales, and JP_Sales by nintendo
+vgsales2016 %>%
+  mutate(nintendo = ifelse(Publisher == "Nintendo", "Nintendo", "Other")) %>%
+  plot_ly(color=~nintendo) %>% 
+  add_trace(
+    type='splom',                                  
+    dimensions = list(
+      list(label='N.America', values=~NA_Sales), 
+      list(label='Europe', values=~EU_Sales),     
+      list(label='Japan', values=~JP_Sales)       
+    )
+  )
+```
+
+Tweaking the appearance
+Deleting the diagonal panels.
+Displaying only the upper or lower triangle of plots.
+```{r}
+# Delete the diagonal plots in splom
+splom %>%
+   style(diagonal = list(visible = FALSE))
+# Delete the plots in the upper half of splom
+splom %>%
+   style(showupperhalf = FALSE)
+# Delete the plots in the lower half of splom
+splom %>%
+   style(showlowerhalf = FALSE)
+```
+
+Binned Scatterplot
+help avoid overplotting
+ create a binned scatterplot of User_Score against Critic_Score to display the entire dataset
+```{r}
+ # Create a binned scatterplot of User_Score vs. Critic_Score
+vgsales %>%
+  plot_ly(x=~Critic_Score, y=~User_Score) %>%
+  add_histogram2d(nbinsx=50, nbinsy=50)
+ ```
+
