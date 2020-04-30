@@ -2,7 +2,7 @@
 title: "Plotly"
 author: "Ji Hun Lee"
 date: "April 30, 2020"
-output: html_document
+output: rmarkdown::github_document
 ---
 
 # Converting a ggplot2 scatterplot
