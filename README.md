@@ -1,4 +1,4 @@
-# Automated-Interactive-Visualization-Wrapper-Function-in-R-Plotly
+# R-Plotly-Interactive Visualizations
 
 1. Converting ggplot2 to plotly object
 2. Histogram
